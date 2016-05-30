@@ -15,13 +15,11 @@
 #ifndef __trackers__SKCFDCF__
 #define __trackers__SKCFDCF__
 
-#include "tracker.h"
-#include "utils.h"
 #include "ktrackers.h"
 #include <sstream>
 
 
-class SKCFDCF : public Tracker {
+class SKCFDCF {
   private:
 
     KTrackers kcf;
