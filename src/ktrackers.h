@@ -1,6 +1,4 @@
-/**************************************************************************************************
- **************************************************************************************************
-
+/*
  GPL-3 License (https://www.tldrlegal.com/l/gpl-3.0)
 
  Copyright (c) 2015 Andrés Solís Montero <http://www.solism.ca>, All rights reserved.
@@ -9,11 +7,9 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
+*/
 
- **************************************************************************************************
- **************************************************************************************************/
-#ifndef __trackers__ktrackers__
-#define __trackers__ktrackers__
+#pragma once
 
 #include <vector>
 #include <functional>
@@ -23,8 +19,6 @@
 
 using namespace cv;
 using namespace std;
-
-
 
 // Gaussian & Polynomial == KCF
 // Linear = DCF
@@ -52,13 +46,11 @@ struct ConfigParams {
     //Look for OpenCV dft function flags parameter
     int flags   = 0;
 
-
     ConfigParams(KType ktype, bool compScale):
         padding(1.5), lambda(1e-4), output_sigma_factor(0.1),
         kernel_feature(KFeat::GRAY), kernel_type(ktype), kernel_sigma(0.2),
         kernel_poly_a(1), kernel_poly_b(7), interp_factor(0.075), hog_orientations(1),
-        cell_size(1), scale(compScale), flags(0)
-    {}
+        cell_size(1), scale(compScale), flags(0) { }
 };
 
 /* Default Configuration Parameters for Grayscale kernel features */
@@ -161,7 +153,6 @@ class KFlow {
     Mat _curr;
     double _scale;
 
-
     KFlow(): _params(), _pts(), _curr(), _scale(1.)
     {}
 
@@ -182,12 +173,12 @@ class KFlow {
         return _scale;
     }
 
-
     void extractPoints(const Mat& frame,
                        const Size2d size) {
         toGray(frame, _curr);
         extractPoints(_curr, _params, size, _pts, _weights);
     }
+
     void processFrame(const Mat& frame,
                       const Mat& weights,
                       const Size2d& size,
@@ -291,8 +282,6 @@ class KFlow {
 
     }
 
-
-
     /*
      * tracks area B to BNew using two images frame I and J.
      */
@@ -307,7 +296,6 @@ class KFlow {
                                     vector<Point2f>& from,
                                     vector<Point2f>& to,
                                     const KFlowConfigParams& p);
-
 
     /*
      *  Transform rectangular region B into BNew using the matching points
@@ -330,19 +318,11 @@ class KFlow {
     /*
      *  Returns the scale between the two sets of points.
      */
-//    static double transform(const vector<Point2f> &start,
-//                            const vector<Point2f> &tracked,
-//                            const KFlowConfigParams &p);
     static double transform(const vector<Point2f>& start,
                             const vector<Point2f>& tracked,
                             const vector<float>& weights,
                             const KFlowConfigParams& p);
 
-
-    //    static void flow(const Mat &prev,
-    //              const Mat &image,
-    //              vector<Point2f> &from,
-    //              vector<Point2f> &to);
 
   private:
     /*
@@ -378,9 +358,7 @@ class KFlow {
     static float getMedianUnmanaged(float arr[], int n);
 };
 
-
 class KTrackers {
-
   public:
     KTrackers(KType type, KFeat feat, bool scale);
 
@@ -412,9 +390,7 @@ class KTrackers {
     TObj         _target;
     ConfigParams _params;
     KFlow        _flow;
-
     Point2f      _ptl;
-
 
   private:
     template<typename T>
@@ -434,7 +410,6 @@ class KTrackers {
             pxl = saturate_cast<T>(pow(pxl / _N + _a, _b));
         }
     }
-
 
     static void getFeatures(const Mat& patch,
                             const ConfigParams& params,
@@ -476,9 +451,6 @@ class KTrackers {
                                      Mat& kf,
                                      bool autocorrelation = false);
 
-
-
-
     //   LINEAR_CORRELATION Linear Kernel at all shifts, i.e. correlation.
     //   Computes the dot-product for all relative shifts between vector input images
     //   X and Y, which each element must be MxN. The result is an MxN map of
@@ -495,7 +467,6 @@ class KTrackers {
     static void linear_correlation(const vector<Mat>& xf,
                                    const vector<Mat>& yf,
                                    Mat& kf);
-
 
     //   POLYNOMIAL_CORRELATION Polynomial Kernel at all shifts, i.e. kernel correlation.
     //   Evaluates a polynomial kernel with constant A and exponent B, for all
@@ -523,7 +494,6 @@ class KTrackers {
     static double fastDetection(const Mat& modelAlphaF,
                                 const Mat& kzf,
                                 Point& location);
-
 
     static void  getPatch(const Mat& image,
                           const Point2f& loc,
@@ -569,8 +539,3 @@ class KTrackers {
     //  Sum all the real values of the spectrum.
     static double sumSpectrum(const Mat& mat, const ConfigParams& params);
 };
-
-
-
-
-#endif

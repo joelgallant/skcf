@@ -1,6 +1,4 @@
-/**************************************************************************************************
- **************************************************************************************************
-
+/*
  GPL-3 License (https://www.tldrlegal.com/l/gpl-3.0)
 
  Copyright (c) 2015 Andrés Solís Montero <http://www.solism.ca>, All rights reserved.
@@ -9,12 +7,9 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
+*/
 
- **************************************************************************************************
- **************************************************************************************************/
-#ifndef _GRADIENT_H_
-#define _GRADIENT_H_
-
+#pragma once
 
 #define _IDX_COLUMN_MAJOR(r,c,k,nrows,ncols)        (r + (c + k * ncols) * nrows)
 #define _IDX_ROW_MAJOR(r,c,k,nrows,ncols,nchannels) ((r * ncols + c) * nchannels + k)
@@ -41,6 +36,7 @@ template <typename T> void OpenCV2Matlab(const cv::Mat& from, T* to) {
                     pdata[_IDX_ROW_MAJOR(r, c, k, rows, cols, channels)];
             }
 }
+
 template <typename T> void Matlab2OpenCV(const T* from, cv::Mat& to) {
     assert((to.dims == 2) && to.isContinuous());
     const int channels = to.channels();
@@ -55,6 +51,7 @@ template <typename T> void Matlab2OpenCV(const T* from, cv::Mat& to) {
                     from[_IDX_COLUMN_MAJOR(r, c, k, rows, cols)];
             }
 }
+
 template <typename T> void OpenCV2MatlabCN(const cv::Mat& from, T* to,
         const int* order) {
     assert((from.dims == 2) && from.isContinuous());
@@ -70,6 +67,7 @@ template <typename T> void OpenCV2MatlabCN(const cv::Mat& from, T* to,
                         order[k], rows, cols, channels)];
             }
 }
+
 template <typename T> void Matlab2OpenCVCN(const T* from, cv::Mat& to,
         const int* order) {
     assert((to.dims == 2) && to.isContinuous());
@@ -85,6 +83,7 @@ template <typename T> void Matlab2OpenCVCN(const T* from, cv::Mat& to,
                     from[_IDX_COLUMN_MAJOR(r, c, order[k], rows, cols)];
             }
 }
+
 template <typename T> void OpenCV2MatlabC1(const cv::Mat& from, T* to) {
     assert((from.dims == 2) && from.isContinuous() && (from.channels() == 1));
     const int rows    = from.rows;
@@ -97,6 +96,7 @@ template <typename T> void OpenCV2MatlabC1(const cv::Mat& from, T* to) {
                 pdata[_IDX_ROW_MAJOR_C1(r, c, rows, cols)];
         }
 }
+
 template <typename T> void Matlab2OpenCVC1(const T* from, cv::Mat& to) {
     assert((to.dims == 2) && to.isContinuous() && (to.channels() == 1));
     const int rows    = to.rows;
@@ -109,6 +109,7 @@ template <typename T> void Matlab2OpenCVC1(const T* from, cv::Mat& to) {
                 from[_IDX_COLUMN_MAJOR_C1(r, c, rows, cols)];
         }
 }
+
 template <typename T> void OpenCVBGR_MatlabRGB(const cv::Mat& from, T* to) {
     assert((from.dims == 2) && from.isContinuous() && (from.channels() == 3));
     const int rows    = from.rows;
@@ -123,6 +124,7 @@ template <typename T> void OpenCVBGR_MatlabRGB(const cv::Mat& from, T* to) {
             to[_IDX_COLUMN_MAJOR(r, c, 2, rows, cols)] = pdata[tmp];     // B  R
         }
 }
+
 template <typename T> void MatlabRGB_OpenCVBGR(const T* from, cv::Mat& to) {
     assert((to.dims == 2) && to.isContinuous() && (to.channels() == 1));
     const int rows    = to.rows;
@@ -275,8 +277,6 @@ void gradQuantize( float *O, float *M, int *O0, int *O1, float *M0, float *M1,
 void gradHist( float *M, float *O, float *H, int h, int w,
                int bin, int nOrients, int softBin, bool full );
 
-/******************************************************************************/
-
 // HOG helper: compute 2x2 block normalization values (padded by 1 pixel)
 float* hogNormMatrix( float *H, int nOrients, int hb, int wb, int bin );
 
@@ -291,8 +291,6 @@ void hog( float *M, float *O, float *H, int h, int w, int binSize,
 // compute FHOG features
 void fhog( float *M, float *O, float *H, int h, int w, int binSize,
            int nOrients, int softBin, float clip );
-
-
 
 template <typename _Tp> static
 void olbp(InputArray _src, OutputArray _dst) {
@@ -322,7 +320,6 @@ void olbp(InputArray _src, OutputArray _dst) {
         }
     }
 }
-
 
 // Fast OLBP using grayscale images only
 template <typename _Tp> static
@@ -362,6 +359,3 @@ void folbp(InputArray _src, OutputArray _dst) {
         }
     }
 }
-
-
-#endif
