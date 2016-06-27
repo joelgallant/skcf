@@ -20,16 +20,11 @@
 using namespace cv;
 using namespace std;
 
-// Gaussian & Polynomial == KCF
-// Linear = DCF
-enum class KType {GAUSSIAN, POLYNOMIAL, LINEAR};
-
 struct ConfigParams {
     float padding = 1.5;  //Extra area surrounding the target
     float lambda  = 1e-4; //Regularization
     float output_sigma_factor = 0.1; //Spatial bandwith (proportional to target)
 
-    KType kernel_type = KType::GAUSSIAN;// Gaussian or Polynomial (KCF), Linear (DCF)
     float kernel_sigma  = 0.2; //gaussian kernel bandwidth
     int   kernel_poly_a = 1;   //polynomial kernel additive term
     int   kernel_poly_b = 7;   //polynomial kernel exponent
@@ -43,16 +38,15 @@ struct ConfigParams {
     //Look for OpenCV dft function flags parameter
     int flags   = 0;
 
-    ConfigParams(KType ktype, bool compScale):
+    ConfigParams(bool compScale):
         padding(1.5), lambda(1e-4), output_sigma_factor(0.1),
-        kernel_type(ktype), kernel_sigma(0.2),
-        kernel_poly_a(1), kernel_poly_b(7), interp_factor(0.075), hog_orientations(1),
+        kernel_sigma(0.2), kernel_poly_a(1), kernel_poly_b(7), interp_factor(0.075), hog_orientations(1),
         cell_size(1), scale(compScale), flags(0) { }
 };
 
 /* Default Configuration Parameters for HOG kernel features */
 struct FHOGConfigParams: public ConfigParams {
-    FHOGConfigParams(KType kernel_t, bool scale): ConfigParams(kernel_t, scale) {
+    FHOGConfigParams(bool scale): ConfigParams(scale) {
         interp_factor    = 0.02;
         kernel_sigma     = 0.5;
         kernel_poly_a    = 1;
@@ -309,7 +303,7 @@ class KFlow {
 
 class KTrackers {
   public:
-    KTrackers(KType type, bool scale);
+    KTrackers(bool scale);
 
     void setArea(const RotatedRect& rect);
     void getTrackedArea(vector<Point2f>& pts);
@@ -325,9 +319,6 @@ class KTrackers {
         return _flow._pts.size();
     }
 
-    KType getType() {
-        return _params.kernel_type;
-    }
     bool  hasScale() {
         return _params.scale;
     }

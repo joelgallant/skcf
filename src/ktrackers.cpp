@@ -91,20 +91,7 @@ void KTrackers::processFrame(const cv::Mat& frame) {
         KTrackers::getFeatures(patch, _params, filter, zf);
         KTrackers::fft2(zf, _params);
 
-        switch (_params.kernel_type) {
-            case KType::GAUSSIAN: {
-                KTrackers::gaussian_correlation(zf, _target.model_xf, _params, kzf, false);
-                break;
-            }
-            case KType::POLYNOMIAL: {
-                KTrackers::polynomial_correlation(zf, _target.model_xf, _params, kzf);
-                break;
-            }
-            case KType::LINEAR: {
-                KTrackers::linear_correlation(zf, _target.model_xf, kzf);
-                break;
-            }
-        }
+        KTrackers::gaussian_correlation(zf, _target.model_xf, _params, kzf, false);
         KTrackers::fastDetection(_target.model_alphaf, kzf, shift);
         Point2f _shift(_params.cell_size * Point2f(shift.x, shift.y));
         _target.center = _target.center + _shift;
@@ -147,20 +134,7 @@ void KTrackers::processFrame(const cv::Mat& frame) {
     KTrackers::getFeatures(patch, _params, filter, xf);
     KTrackers::fft2(xf, _params);
 
-    switch (_params.kernel_type) {
-        case KType::GAUSSIAN: {
-            KTrackers::gaussian_correlation(xf, xf, _params, kf, true);
-            break;
-        }
-        case KType::POLYNOMIAL: {
-            KTrackers::polynomial_correlation(xf, xf, _params, kf);
-            break;
-        }
-        case KType::LINEAR: {
-            KTrackers::linear_correlation(xf, xf, kf);
-            break;
-        }
-    }
+    KTrackers::gaussian_correlation(xf, xf, _params, kf, true);
     KTrackers::fastTraining(yf, kf, _params, alphaf);
 
     if (!_target.initiated) {
@@ -173,10 +147,10 @@ void KTrackers::processFrame(const cv::Mat& frame) {
     }
 }
 
-KTrackers::KTrackers(KType type, bool scale):
-    _target(), _params(type, scale),  _ptl(0., 0.) {
+KTrackers::KTrackers(bool scale):
+    _target(), _params(scale),  _ptl(0., 0.) {
 
-    _params = FHOGConfigParams(type, scale);
+    _params = FHOGConfigParams(scale);
 }
 
 void KTrackers::divSpectrums( InputArray _srcA, InputArray _srcB,

@@ -19,8 +19,7 @@ class SKCFDCF {
     KTrackers kcf;
 
   public:
-    SKCFDCF(KType type = KType::GAUSSIAN,
-            bool scale = false): kcf(type, scale) {}
+    SKCFDCF(bool scale = false): kcf(scale) {}
 
     ~SKCFDCF(void) {
     }
