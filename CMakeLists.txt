@@ -11,6 +11,5 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 
 include_directories(${PROJECT_SOURCE_DIR})
 add_library(skcf ${PROJECT_SOURCE_DIR}/gradient
-                 ${PROJECT_SOURCE_DIR}/ktrackers
-                 ${PROJECT_SOURCE_DIR}/skcfdcf)
+                 ${PROJECT_SOURCE_DIR}/ktrackers)
 target_link_libraries(skcf ${OpenCV_LIBS})
