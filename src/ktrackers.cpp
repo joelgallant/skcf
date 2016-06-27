@@ -173,31 +173,10 @@ void KTrackers::processFrame(const cv::Mat& frame) {
     }
 }
 
-KTrackers::KTrackers(KType type, KFeat feat, bool scale):
+KTrackers::KTrackers(KType type, bool scale):
     _target(), _params(type, scale),  _ptl(0., 0.) {
 
-    switch (feat) {
-        case KFeat::FHOG: {
-            _params = FHOGConfigParams(type, scale);
-            break;
-        }
-        case KFeat::GRAY: {
-            _params = GrayConfigParams(type, scale);
-            break;
-        }
-        case KFeat::RGB: {
-            _params = RGBConfigParams(type, scale);
-            break;
-        }
-        case KFeat::HLS: {
-            _params = HLSConfigParams(type, scale);
-            break;
-        }
-        case KFeat::HSV: {
-            _params = HSVConfigParams(type, scale);
-            break;
-        }
-    }
+    _params = FHOGConfigParams(type, scale);
 }
 
 void KTrackers::divSpectrums( InputArray _srcA, InputArray _srcB,
@@ -801,61 +780,12 @@ void KTrackers::getFeatures(const Mat& patch,
 
 
     //assert(patch.type() == CV_32F || patch.type() == CV_32FC3);
-    switch (params.kernel_feature) {
-        case (KFeat::HSV): {
-            Mat color, hsv, floatImg;
-            KFlow::toBGR(patch, color);
+    Mat grayImg, floatImg;
+    KFlow::toGray(patch, grayImg);
+    grayImg.convertTo(floatImg, CV_32F, 1.0 / 255.0);
+    fhog(floatImg, features, params.cell_size, params.hog_orientations);
+    features.pop_back(); //last channel is only zeros
 
-            cvtColor(color, hsv, CV_BGR2HSV_FULL);
-            //range of HSV_FULL is 0-255 0-255 0-255
-            //range of HSV      is 0-180 0-255 0-255
-
-            hsv.convertTo(floatImg, CV_32F, 1.0 / 255.0);
-            Scalar _mean = mean(floatImg);
-            split(floatImg - _mean, features);
-
-
-            break;
-        }
-        case (KFeat::HLS): {
-            Mat color, hsv, floatImg;
-            KFlow::toBGR(patch, color);
-            //range of HLS_FULL is 0-255 0-255 0-255
-            //range of HLS      is 0-180 0-255 0-255
-            cvtColor(color, hsv, CV_BGR2HLS_FULL);
-            hsv.convertTo(floatImg, CV_32F, 1.0 / 255.0);
-            Scalar _mean = mean(floatImg);
-            split(floatImg - _mean, features);
-            break;
-        }
-        case (KFeat::GRAY): {
-            Mat grayImg, floatImg;
-            KFlow::toGray(patch, grayImg);
-            grayImg.convertTo(floatImg, CV_32F, 1.0 / 255.0);
-            Scalar _mean = mean(floatImg);
-            split(floatImg - _mean, features);
-            break;
-        }
-        case (KFeat::RGB): {
-            Mat floatImg;
-            patch.convertTo(floatImg, CV_32F, 1.0 / 255.0);
-            Scalar _mean = mean(floatImg);
-            split(floatImg - _mean, features);
-
-            break;
-        }
-        case (KFeat::FHOG): {
-            Mat grayImg, floatImg;
-            KFlow::toGray(patch, grayImg);
-            grayImg.convertTo(floatImg, CV_32F, 1.0 / 255.0);
-            fhog(floatImg, features, params.cell_size, params.hog_orientations);
-            features.pop_back(); //last channel is only zeros
-            break;
-        }
-        default: {
-            break;
-        }
-    }
     auto fPara = [&](const Range & r) {
         for ( size_t i = r.start; i != r.end; ++i) {
             features[i] = features[i].mul(windowFunction);

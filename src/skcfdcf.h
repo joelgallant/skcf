@@ -20,8 +20,7 @@ class SKCFDCF {
 
   public:
     SKCFDCF(KType type = KType::GAUSSIAN,
-            KFeat feat = KFeat::FHOG ,
-            bool scale = false): kcf(type, feat, scale) {}
+            bool scale = false): kcf(type, scale) {}
 
     ~SKCFDCF(void) {
     }

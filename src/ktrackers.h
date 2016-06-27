@@ -23,16 +23,13 @@ using namespace std;
 // Gaussian & Polynomial == KCF
 // Linear = DCF
 enum class KType {GAUSSIAN, POLYNOMIAL, LINEAR};
-enum class KFeat {GRAY, RGB, FHOG, HLS, HSV};
 
 struct ConfigParams {
     float padding = 1.5;  //Extra area surrounding the target
     float lambda  = 1e-4; //Regularization
     float output_sigma_factor = 0.1; //Spatial bandwith (proportional to target)
 
-    KFeat kernel_feature = KFeat::GRAY;    // Gray, RGB, or HOG
-    KType kernel_type    =
-        KType::GAUSSIAN;// Gaussian or Polynomial (KCF), Linear (DCF)
+    KType kernel_type = KType::GAUSSIAN;// Gaussian or Polynomial (KCF), Linear (DCF)
     float kernel_sigma  = 0.2; //gaussian kernel bandwidth
     int   kernel_poly_a = 1;   //polynomial kernel additive term
     int   kernel_poly_b = 7;   //polynomial kernel exponent
@@ -48,62 +45,14 @@ struct ConfigParams {
 
     ConfigParams(KType ktype, bool compScale):
         padding(1.5), lambda(1e-4), output_sigma_factor(0.1),
-        kernel_feature(KFeat::GRAY), kernel_type(ktype), kernel_sigma(0.2),
+        kernel_type(ktype), kernel_sigma(0.2),
         kernel_poly_a(1), kernel_poly_b(7), interp_factor(0.075), hog_orientations(1),
         cell_size(1), scale(compScale), flags(0) { }
-};
-
-/* Default Configuration Parameters for Grayscale kernel features */
-struct GrayConfigParams: public ConfigParams {
-    GrayConfigParams(KType kernel_t, bool scale): ConfigParams(kernel_t, scale) {
-        kernel_feature = KFeat::GRAY;
-        interp_factor  = 0.075;
-        kernel_sigma   = 0.2;
-        kernel_poly_a  = 1;
-        kernel_poly_b  = 7;
-        cell_size      = 1;
-    }
-};
-
-struct HLSConfigParams: public ConfigParams {
-    HLSConfigParams(KType kernel_t, bool scale): ConfigParams(kernel_t, scale) {
-        kernel_feature = KFeat::HLS;
-        interp_factor  = 0.075;
-        kernel_sigma   = 0.2;
-        kernel_poly_a  = 1;
-        kernel_poly_b  = 7;
-        cell_size      = 1;
-    }
-};
-
-struct HSVConfigParams: public ConfigParams {
-    HSVConfigParams(KType kernel_t, bool scale): ConfigParams(kernel_t, scale) {
-        kernel_feature = KFeat::HSV;
-        interp_factor  = 0.075;
-        kernel_sigma   = 0.2;
-        kernel_poly_a  = 1;
-        kernel_poly_b  = 7;
-        cell_size      = 1;
-    }
-};
-
-
-/* Default Configuration Parameters for RGB kernel features */
-struct RGBConfigParams: public ConfigParams {
-    RGBConfigParams(KType kernel_t, bool scale): ConfigParams(kernel_t, scale) {
-        kernel_feature = KFeat::RGB;
-        interp_factor  = 0.075;
-        kernel_sigma   = 0.2;
-        kernel_poly_a  = 1;
-        kernel_poly_b  = 7;
-        cell_size      = 1;
-    }
 };
 
 /* Default Configuration Parameters for HOG kernel features */
 struct FHOGConfigParams: public ConfigParams {
     FHOGConfigParams(KType kernel_t, bool scale): ConfigParams(kernel_t, scale) {
-        kernel_feature   = KFeat::FHOG;
         interp_factor    = 0.02;
         kernel_sigma     = 0.5;
         kernel_poly_a    = 1;
@@ -360,7 +309,7 @@ class KFlow {
 
 class KTrackers {
   public:
-    KTrackers(KType type, KFeat feat, bool scale);
+    KTrackers(KType type, bool scale);
 
     void setArea(const RotatedRect& rect);
     void getTrackedArea(vector<Point2f>& pts);
@@ -378,9 +327,6 @@ class KTrackers {
 
     KType getType() {
         return _params.kernel_type;
-    }
-    KFeat getFeature() {
-        return _params.kernel_feature;
     }
     bool  hasScale() {
         return _params.scale;
