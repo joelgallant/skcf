@@ -581,27 +581,6 @@ void  KTrackers::hannWindow(const Size& sz, Mat& filter) {
     delete []h;
 }
 
-void KTrackers::fft2( Mat& features, const ConfigParams& params) {
-    dft(features, features, params.flags);
-}
-
-void KTrackers::fft2(const Mat& features, Mat& fft2,
-                     const ConfigParams& params) {
-    dft(features, fft2, params.flags);
-}
-
-void KTrackers::fft2(const vector<Mat>& features, vector<Mat>& fft2,
-                     const ConfigParams& params) {
-    fft2.clear();
-    fft2.resize(features.size());
-    auto dftPara = [&](const Range & r) {
-        for (size_t i = r.start ; i != r.end; ++i) {
-            dft(features[i], fft2[i], params.flags);
-        }
-    };
-    dftPara(Range(0, features.size()));
-}
-
 void KTrackers::fft2(vector<Mat>& features, const ConfigParams& params) {
     auto dftPara = [&](const Range & r) {
         for (size_t i = r.start ; i != r.end; ++i) {
@@ -609,6 +588,10 @@ void KTrackers::fft2(vector<Mat>& features, const ConfigParams& params) {
         }
     };
     dftPara(Range(0, features.size()));
+}
+
+void KTrackers::fft2(Mat& features, const ConfigParams& params) {
+    dft(features, features, params.flags);
 }
 
 double KTrackers::sumSpectrum(const Mat& mat, const ConfigParams& params) {
@@ -752,11 +735,9 @@ void KTrackers::getFeatures(const Mat& patch,
                             vector<Mat>& features) {
     features.clear();
 
-
     //assert(patch.type() == CV_32F || patch.type() == CV_32FC3);
-    Mat grayImg, floatImg;
-    KFlow::toGray(patch, grayImg);
-    grayImg.convertTo(floatImg, CV_32F, 1.0 / 255.0);
+    Mat floatImg;
+    patch.convertTo(floatImg, CV_32F, 1.0 / 255.0);
     fhog(floatImg, features, params.cell_size, params.hog_orientations);
     features.pop_back(); //last channel is only zeros
 

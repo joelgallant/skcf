@@ -26,85 +26,76 @@ struct ConfigParams {
     float output_sigma_factor = 0.1; //Spatial bandwith (proportional to target)
 
     float kernel_sigma  = 0.2; //gaussian kernel bandwidth
-    int   kernel_poly_a = 1;   //polynomial kernel additive term
-    int   kernel_poly_b = 7;   //polynomial kernel exponent
+    int kernel_poly_a = 1;   //polynomial kernel additive term
+    int kernel_poly_b = 7;   //polynomial kernel exponent
 
     float interp_factor = 0.075;//linear interpolation factor for adaptation
-    int   hog_orientations = 1;
-    int   cell_size = 1;
-    bool  scale     = false;     //Toggle for scale computation
+    int hog_orientations = 1;
+    int cell_size = 1;
+    bool scale     = false;     //Toggle for scale computation
 
     // 0 value uses compact CCS packed format for the spectrum. DFT_COMPLEX_OUTPUT;
     //Look for OpenCV dft function flags parameter
-    int flags   = 0;
+    int flags = 0;
 
     ConfigParams(bool compScale):
-        padding(1.5), lambda(1e-4), output_sigma_factor(0.1),
-        kernel_sigma(0.2), kernel_poly_a(1), kernel_poly_b(7), interp_factor(0.075), hog_orientations(1),
-        cell_size(1), scale(compScale), flags(0) { }
+        padding(1.5), lambda(1e-4), output_sigma_factor(0.1), kernel_sigma(0.2),
+        kernel_poly_a(1), kernel_poly_b(7), interp_factor(0.075),
+        hog_orientations(1), cell_size(1), scale(compScale), flags(0) {}
 };
 
 /* Default Configuration Parameters for HOG kernel features */
 struct FHOGConfigParams: public ConfigParams {
     FHOGConfigParams(bool scale): ConfigParams(scale) {
-        interp_factor    = 0.02;
-        kernel_sigma     = 0.5;
-        kernel_poly_a    = 1;
-        kernel_poly_b    = 9;
+        interp_factor = 0.02;
+        kernel_sigma = 0.5;
+        kernel_poly_a = 1;
+        kernel_poly_b = 9;
         hog_orientations = 9;
-        cell_size        = 4;
+        cell_size = 4;
     }
 };
 
 /* Internal representation of the object by size and location */
 struct TObj {
-    bool       initiated = false;
-    Size2i    windowSize;   // Optimal window size for fft performance
-    Size2d          size;   // Current size of the object
-    Point2f       center;   // Center location of the object
-    vector<Mat> model_xf;   // Fourier Domain: model of the tracking obj.
-    Mat     model_alphaf;   // Fourier Domain: Kernel Ridge Regression.
+    bool initiated = false;
+    Size2i windowSize;  // Optimal window size for fft performance
+    Size2d size;  // Current size of the object
+    Point2f center;  // Center location of the object
+    vector<Mat> model_xf;  // Fourier Domain: model of the tracking obj.
+    Mat model_alphaf;  // Fourier Domain: Kernel Ridge Regression.
 };
 
 struct KFlowConfigParams {
-    int winsize_ncc = 10;    //SIZE OF THE WINDOWS FOR NCC COMPUTATION
-    int win_size_lk = 15;    //SIZE OF THE WINDOWS FOR LUKAS KANADE
-    int level       = 0;     //PYRAMID LEVEL OF LK
-    int medFBThreshold = 10; // Threshold for the back-projection
+    int winsize_ncc = 10; // size of the windows for ncc computation
+    int win_size_lk = 15; // size of the windows for lukas kanade
+    int level = 0;  // pyramid level of lk
+    int medFBThreshold = 10; // threshold for the back-projection
     Size winLK = Size(win_size_lk, win_size_lk);
-    TermCriteria criteria = TermCriteria(TermCriteria::COUNT + TermCriteria::EPS,
-                                         20, 0.03);
+    TermCriteria criteria =
+        TermCriteria(TermCriteria::COUNT | TermCriteria::EPS, 20, 0.03);
     int method = CV_TM_CCORR_NORMED;
-    int transMode = 1;     //O : Median.  1: Centroid
+    int transMode = 1;  // O: Median 1: Centroid
     int ptsThreshold = 5;
 
-    //Shi-Tomasi features  / Harris Corner Detector
-    double     qualityLevel = 0.01;
-    double     minDistance  = 3;
-    int           blockSize = 3;
-    bool  useHarrisDetector = false;
-    double                k = 0.04;
-    int maxCorners          = 100;
-
+    // Shi-Tomasi features / Harris Corner Detector
+    double qualityLevel = 0.01;
+    double minDistance  = 3;
+    int blockSize = 3;
+    bool useHarrisDetector = false;
+    double k = 0.04;
+    int maxCorners = 100;
 };
 
 class KFlow {
-    KFlowConfigParams _params;
   public:
     vector<Point2f> _pts;
     vector<float> _weights;
     Mat _curr;
     double _scale;
 
-    KFlow(): _params(), _pts(), _curr(), _scale(1.)
-    {}
+    KFlow(): _params(), _pts(), _curr(), _scale(1.) {}
 
-    static void toGray(const Mat& input, Mat& output) {
-        if (input.channels() == 3)
-        { cvtColor(input, output, CV_BGR2GRAY); }
-        else
-        { input.copyTo(output); }
-    }
     static void toBGR(const Mat& input, Mat& output) {
         if (input.channels() == 1)
         { cvtColor(input, output, CV_GRAY2BGR); }
@@ -116,23 +107,17 @@ class KFlow {
         return _scale;
     }
 
-    void extractPoints(const Mat& frame,
-                       const Size2d size) {
-        toGray(frame, _curr);
+    void extractPoints(const Mat& frame, const Size2d size) {
+        _curr = frame;
         extractPoints(_curr, _params, size, _pts, _weights);
     }
 
-    void processFrame(const Mat& frame,
-                      const Mat& weights,
-                      const Size2d& size,
+    void processFrame(const Mat& frame, const Mat& weights, const Size2d& size,
                       const Point2f& shift) {
-        Mat tmp;
-        toGray(frame, tmp);
-
         _scale = 1.0;
         if (_pts.size() > 0) {
             vector<Point2f> to;
-            flowForwardBackward(_curr, tmp, _pts, to, _params);
+            flowForwardBackward(_curr, frame, _pts, to, _params);
             _scale = transform(_pts, to, _weights, _params);
 
             int inliers = 0, outliers = 0;
@@ -140,25 +125,23 @@ class KFlow {
                 Point2f _tmp(_pts[i].x - (to[i].x + shift.x * _scale),
                              _pts[i].y - (to[i].y + shift.y * _scale));
 
-                if (norm(_tmp) < _params.ptsThreshold)
-                { inliers++; }
-                else
-                { outliers++; }
+                if (norm(_tmp) < _params.ptsThreshold) {
+                    inliers++;
+                } else {
+                    outliers++;
+                }
             }
 
-            if (outliers > inliers)
-            { _scale = 1.0; }
-
+            if (outliers > inliers) {
+                _scale = 1.0;
+            }
         }
 
-        tmp.copyTo(_curr);
+        frame.copyTo(_curr);
     }
 
-  public:
-    static void extractPoints(const Mat& patch,
-                              const KFlowConfigParams& p,
-                              const Size2d&  size,
-                              vector<Point2f>& points,
+    static void extractPoints(const Mat& patch, const KFlowConfigParams& p,
+                              const Size2d&  size, vector<Point2f>& points,
                               vector<float>& weights) {
 
         assert(patch.type() == CV_8UC1);
@@ -167,10 +150,12 @@ class KFlow {
         int height = patch.rows;
         float *w = new float[width];
         float *h = new float[height];
-        for (size_t i = 0; i < width; ++i )
-        { w[i] = .5 * ( 1. - cos((2.* CV_PI * i) / (width - 1))); }
-        for (size_t i = 0; i < height; ++i)
-        { h[i] = .5 * ( 1. - cos((2.* CV_PI * i) / (height - 1))); }
+        for (size_t i = 0; i < width; ++i ) {
+            w[i] = .5 * ( 1. - cos((2.* CV_PI * i) / (width - 1)));
+        }
+        for (size_t i = 0; i < height; ++i) {
+            h[i] = .5 * ( 1. - cos((2.* CV_PI * i) / (height - 1)));
+        }
 
         int POINTS = 100;
         double wTHRESHOLD = 0.85;
@@ -184,15 +169,9 @@ class KFlow {
         Mat mask = Mat::zeros(patch.size(), CV_8UC1);
         rectangle(mask, tl, br, Scalar(255), CV_FILLED);
         vector<Point2f> _tmp;
-        goodFeaturesToTrack(patch,
-                            _tmp,
-                            p.maxCorners,
-                            p.qualityLevel,
-                            p.minDistance,
-                            mask,
-                            p.blockSize,
-                            p.useHarrisDetector,
-                            p.k);
+        goodFeaturesToTrack(patch, _tmp, p.maxCorners, p.qualityLevel,
+                            p.minDistance, mask, p.blockSize,
+                            p.useHarrisDetector, p.k);
         weights.clear();
         points.clear();
 
@@ -217,35 +196,27 @@ class KFlow {
 
             weights.push_back(_weight);
             points.push_back(Point2f(nX, nY));
-
         }
 
         delete[] w;
         delete[] h;
-
     }
 
     /*
      * tracks area B to BNew using two images frame I and J.
      */
-    static void flowForward(const Mat& I,
-                            const Mat& J,
-                            vector<Point2f>& from,
-                            vector<Point2f>& to,
-                            const KFlowConfigParams& p);
+    static void flowForward(const Mat& I, const Mat& J, vector<Point2f>& from,
+                            vector<Point2f>& to, const KFlowConfigParams& p);
 
-    static void flowForwardBackward(const Mat& I,
-                                    const Mat& J,
-                                    vector<Point2f>& from,
-                                    vector<Point2f>& to,
+    static void flowForwardBackward(const Mat& I, const Mat& J,
+                                    vector<Point2f>& from, vector<Point2f>& to,
                                     const KFlowConfigParams& p);
 
     /*
      *  Transform rectangular region B into BNew using the matching points
      *  from start to tracked.
      */
-    static void transform(Rect_<float>& B,
-                          Rect_<float>& BNew,
+    static void transform(Rect_<float>& B, Rect_<float>& BNew,
                           const vector<Point2f>& start,
                           const vector<Point2f>& tracked,
                           const KFlowConfigParams& p);
@@ -254,8 +225,7 @@ class KFlow {
      *  Returns the scale and the translation between the two sets of points.
      */
     static double transform(const vector<Point2f>& start,
-                            const vector<Point2f>& tracked,
-                            Point2f& shift,
+                            const vector<Point2f>& tracked, Point2f& shift,
                             const KFlowConfigParams& p);
 
     /*
@@ -266,8 +236,9 @@ class KFlow {
                             const vector<float>& weights,
                             const KFlowConfigParams& p);
 
-
   private:
+    KFlowConfigParams _params;
+
     /*
      * Computes the NCC value for points from one frame to the other
      */
@@ -324,10 +295,10 @@ class KTrackers {
     }
 
   protected:
-    TObj         _target;
+    TObj _target;
     ConfigParams _params;
-    KFlow        _flow;
-    Point2f      _ptl;
+    KFlow _flow;
+    Point2f _ptl;
 
   private:
     template<typename T>
@@ -348,26 +319,18 @@ class KTrackers {
         }
     }
 
-    static void getFeatures(const Mat& patch,
-                            const ConfigParams& params,
-                            const Mat& windowFunction,
-                            vector<Mat>& features);
+    static void getFeatures(const Mat& patch, const ConfigParams& params,
+                            const Mat& windowFunction, vector<Mat>& features);
 
-    static void getPoints(const Mat& image,
-                          const Mat& patch,
-                          const ConfigParams& params,
-                          const TObj& obj,
-                          vector<Point2f>& points,
-                          Point2f& tl);
+    static void getPoints(const Mat& image, const Mat& patch,
+                          const ConfigParams& params, const TObj& obj,
+                          vector<Point2f>& points, Point2f& tl);
 
     //  Computes the dft of each channel using the ConfigParams.flag value
     //  A value of 0 will compute the dft using the CCS packed format. Each Mat will be of type CV_32FC1
     //  DFT_COMPLEX_VALUE will compute the whole spectrum with type CV_32FC2.
     static void fft2(vector<Mat>& fft2, const ConfigParams& params);//inplace
-    static void fft2(const vector<Mat>& features, vector<Mat>& fft2,
-                     const ConfigParams& params);
     static void fft2(Mat& fft2, const ConfigParams& params); //inplace
-    static void fft2(const Mat& features, Mat& fft2, const ConfigParams& params);
 
     //   GAUSSIAN_CORRELATION Gaussian Kernel at all shifts, i.e. kernel correlation.
     //   Evaluates a Gaussian kernel with bandwidth SIGMA for all relative
